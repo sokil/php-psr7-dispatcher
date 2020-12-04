@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Sokil\Psr\Http\Server;
 
 use Psr\Container\ContainerInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\MiddlewareInterface as SinglePassMiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Sokil\Psr\Http\Server\Middleware\DoublePassMiddlewareInterface;
+use Sokil\Psr\Http\Server\Middleware\DoublePassToSinglePassMiddlewareDecorator;
 
 class RequestDispatcher implements RequestHandlerInterface
 {
@@ -16,6 +19,11 @@ class RequestDispatcher implements RequestHandlerInterface
      * @var ContainerInterface
      */
     private $container;
+
+    /**
+     * @var ResponseFactoryInterface
+     */
+    private $responseFactory;
 
     /**
      * @var string
@@ -29,15 +37,18 @@ class RequestDispatcher implements RequestHandlerInterface
 
     /**
      * @param ContainerInterface $container
+     * @param ResponseFactoryInterface $responseFactory
      * @param string $handlers
      * @param string[] $middlewares
      */
     public function __construct(
         ContainerInterface $container,
+        ResponseFactoryInterface $responseFactory,
         string $handlers,
         array $middlewares
     ) {
         $this->container = $container;
+        $this->responseFactory = $responseFactory;
         $this->handlers = $handlers;
         $this->middlewares = $middlewares;
     }
@@ -60,6 +71,7 @@ class RequestDispatcher implements RequestHandlerInterface
                 $request,
                 new static(
                     $this->container,
+                    $this->responseFactory,
                     $this->handlers,
                     $middlewares
                 )
@@ -85,18 +97,23 @@ class RequestDispatcher implements RequestHandlerInterface
     }
 
     /**
-     * @param string|callable|MiddlewareInterface $middleware
+     * @param string|callable|SinglePassMiddlewareInterface|DoublePassMiddlewareInterface $middleware
      *
-     * @return MiddlewareInterface
+     * @return SinglePassMiddlewareInterface
      */
-    private function resolveMiddleware($middleware): MiddlewareInterface
+    private function resolveMiddleware($middleware): SinglePassMiddlewareInterface
     {
         if (is_string($middleware)) {
             return $this->container->get($middleware);
         } elseif (is_callable($middleware)) {
             return call_user_func($middleware, $this->container);
-        } elseif ($middleware instanceof MiddlewareInterface) {
+        } elseif ($middleware instanceof SinglePassMiddlewareInterface) {
             return $middleware;
+        } elseif ($middleware instanceof DoublePassMiddlewareInterface) {
+            return new DoublePassToSinglePassMiddlewareDecorator(
+                $middleware,
+                $this->responseFactory->createResponse()
+            );
         } else {
             throw new \InvalidArgumentException('Middleware definition is invalid');
         }
