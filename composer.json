@@ -1,0 +1,34 @@
+{
+    "name": "sokil/php-psr7-dispatcher",
+    "description": "PSR-7 request dispatching",
+    "type": "library",
+    "require": {
+        "php": "^7.3",
+        "psr/http-message": "^1.0",
+        "psr/http-factory": "^1.0",
+        "psr/http-server-handler": "^1.0",
+        "fig/http-message-util": "^1.1",
+        "psr/http-server-middleware": "^1.0",
+        "psr/container": "^1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Dmytro Sokil",
+            "email": "dmytro.sokil@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Sokil\\Psr\\Http\\Server\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Sokil\\Psr\\Http\\Server\\": "tests/"
+        }
+    }
+}
