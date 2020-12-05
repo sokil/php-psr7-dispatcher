@@ -13,7 +13,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 class DoublePassToSinglePassMiddlewareDecorator implements SinglePassMiddlewareInterface
 {
     /**
-     * @var DoublePassMiddlewareInterface
+     * @var DoublePassMiddlewareInterface|callable
      */
     private $doublePassMiddleware;
 
@@ -23,11 +23,11 @@ class DoublePassToSinglePassMiddlewareDecorator implements SinglePassMiddlewareI
     private $response;
 
     /**
-     * @param DoublePassMiddlewareInterface $doublePassMiddleware
+     * @param DoublePassMiddlewareInterface|callable $doublePassMiddleware
      * @param ResponseInterface $response
      */
     public function __construct(
-        DoublePassMiddlewareInterface $doublePassMiddleware,
+        callable $doublePassMiddleware,
         ResponseInterface $response
     ) {
         $this->doublePassMiddleware = $doublePassMiddleware;
